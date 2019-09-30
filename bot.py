@@ -24,32 +24,59 @@ class AmazonBot:
 
     def source_code(self):
         driver = self.driver
-        url = ('https://www.amazon.com/s?k='+ urllib.parse.quote_plus(self.keyword) +'&ref=nb_sb_noss_2')
-        driver.get(url)
-        time.sleep(5)
-        test1 = driver.page_source
-        with open(self.keyword+'.html', 'w', encoding='utf-8') as f:
-            f.write(str(test1))
+        for page in range(1,5):
+            url = 'https://www.amazon.com/s?k='+ urllib.parse.quote_plus(self.keyword) 
+            if page>1:
+                url += '&page='+str(page) +'&ref=sr_pg_'+str(page)
+            else:
+                url += '&ref=nb_sb_noss_2'
+            driver.get(url)
+            time.sleep(5)
+            test1 = driver.page_source
+            with open(self.keyword+str(page)+'.html', 'w', encoding='utf-8') as f:
+                f.write(str(test1))
         driver.quit()
     @staticmethod
     def stripElements(i):
         try:
+            price = (i.find('span', {"class": "a-offscreen"}).text)
+            price = re.findall('[0-9]+\.[0-9]{2}',price)[0]
+            # print("price----------------------------------------"+price)
+            
+        except AttributeError:
+            price = -1 #test this more but 
+        try:
             title = (i.h2.text).strip()
             print("title----------------------------------------" +title)
-            price = (i.find('span', {"class": "a-offscreen"}).text)
-            print("price1----------------------------------------"+price)
-            price = re.findall('[0-9]+\.[0-9]{2}',price)[0]
-            # print("price2----------------------------------------"+price)
+            if(price==-1):
+                price = re.findall('(\$)([0-9]+\.[0-9]{2})', str(i))
+                if(len(price) > 0):
+                    price = price[0][1]
+                else:
+                    print("No price found")
+                    return None        
+            # print("price----------------------------------------")
+            # print(price)
             tag_url = re.findall(
-                '(href=")((.*?)dp/[a-zA-Z0-9]{10})(.*?)(")', str(i))[0][1] #[0].replace("href=\"", "")
-            print("tag_url---------------------------------------"+tag_url)
+                '(href=")((.*?)dp/[a-zA-Z0-9]{10})(.*?)(")', str(i)) #[0].replace("href=\"", "")
+            if(len(tag_url)>0):
+                tag_url = tag_url[0][1]
+            else:
+                print("No URL found")
+                return None;
+            # print("tag_url---------------------------------------"+tag_url)
             full_url = ("https://www.amazon.com%s" % tag_url)
             # print("full_url---------------------------------------"+full_url)
             tag_image = re.findall(
-                '(<img.*)(src=)(\s)*"((.*?)[a-zA-Z0-9]?_\.(jpg|png){1})(\s)*(")(.*?) 1x', str(i))[0][3]
-            print("tag_image---------------------------------------"+tag_image)
+                '(<img.*)(src=)(\s)*"((.*?)[a-zA-Z0-9]?_\.(jpg|png){1})(\s)*(")(.*?) 1x', str(i))
+            if(len(tag_image)>0):
+                tag_image = tag_image[0][3]
+            else:
+                print("No image found")
+                return None;
+            # print("tag_image---------------------------------------"+tag_image)
             # tag_image = re.findall('https://(.*?)\.(jpg|png){1}', tag_image)[0][0:-1]
-            dict = {'title': str(title), 'Price': str(
+            dict = {'Title': str(title), 'Price': str(
                 price), 'URL': str(full_url), 'Image': str(tag_image)}
             return dict
         except AttributeError:
@@ -59,13 +86,14 @@ class AmazonBot:
     def list_layout_amazon(self):
         allItem=[]
         driver = self.driver
-        source = open(self.keyword+'.html', "rb").read()
-        soup = bs(source, "html.parser")
-        cash = soup.find_all("div", {"class": "sg-col-20-of-24 s-result-item sg-col-0-of-12 sg-col-28-of-32 sg-col-16-of-20 sg-col sg-col-32-of-36 sg-col-12-of-16 sg-col-24-of-28"})
-        for i in cash:
-            dict = AmazonBot.stripElements(i)
-            if dict is not None:
-                allItem.append(dict)
+        for page in range(1,5):
+            source = open(self.keyword+str(page)+'.html', "rb").read()
+            soup = bs(source, "html.parser")
+            cash = soup.find_all("div", {"class": "sg-col-20-of-24 s-result-item sg-col-0-of-12 sg-col-28-of-32 sg-col-16-of-20 sg-col sg-col-32-of-36 sg-col-12-of-16 sg-col-24-of-28"})
+            for i in cash:
+                dict = AmazonBot.stripElements(i)
+                if dict is not None:
+                    allItem.append(dict)
 
         driver.quit()
         return allItem       
@@ -73,13 +101,14 @@ class AmazonBot:
     def grid_layout(self):
         allItem = []
         driver = self.driver
-        source = open(self.keyword+'.html', "rb").read()
-        soup = bs(source, "html.parser")
-        cash = soup.find_all("div", {"class": "sg-col-4-of-24 sg-col-4-of-12 sg-col-4-of-36 s-result-item sg-col-4-of-28 sg-col-4-of-16 sg-col sg-col-4-of-20 sg-col-4-of-32"})
-        for i in cash: #parse elements from html then use                
-            dict = AmazonBot.stripElements(i)
-            if dict is not None:
-                allItem.append(dict)
+        for page in range(1,5):
+            source = open(self.keyword+str(page)+'.html', "rb").read()
+            soup = bs(source, "html.parser")
+            cash = soup.find_all("div", {"class": "sg-col-4-of-24 sg-col-4-of-12 sg-col-4-of-36 s-result-item sg-col-4-of-28 sg-col-4-of-16 sg-col sg-col-4-of-20 sg-col-4-of-32"})
+            for i in cash: #parse elements from html then use                
+                dict = AmazonBot.stripElements(i)
+                if dict is not None:
+                    allItem.append(dict)
 
         driver.quit()       
         return allItem

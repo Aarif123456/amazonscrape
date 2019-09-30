@@ -16,57 +16,69 @@ def getDict(exampleList): #use dictionary to create clusters
     mainImageDict = {}
     relevantSet = set()
 
-    pprint.pprint(exampleList)
+    # pprint.pprint(exampleList)
     for h in exampleList:
-        # pprint.pprint(h)
         # print(h)
         if(h==""):
             continue
-        title = h['title']
-        Price = h['Price'].replace("[", "").replace("(", "").replace(")", "").replace(",", "").replace("-", "").replace("]", " ").replace("\"", "").replace("'", "").strip()
+        title = h['Title']
+        price = (float)(h['Price'].strip())
         URL = h['URL']
         img = h['Image']
-        mainList = title.replace("[", "").replace("(", "").replace(")", "").replace(",", "").replace(" and ", "").replace(" on ", "").replace(" or ", "").replace("-", "").replace("]", " ").replace(" the " ,"").replace(" with " , "").replace(" in " , "").replace("!", "").replace("'", "").strip().lower().split(" ")
-        title = h['title'] #reget title so it is reloaded
+        mainList = title.strip().lower().replace("[", "").replace("(", "").replace(")", "").replace(",", "").replace("!", "").replace(":", " ").replace(" and ", " ").replace(" on ", " ").replace(" or ", " ").replace("-", " ").replace("]", " ").replace(" the " ," ").replace(" with " , " ").replace(" in " , "").replace(" for " , " ").replace(" an " , "").replace(" a " , "").replace("'", "").split(" ")
+        title = h['Title'] #reget title so it is reloaded
+        # print("pretrim")
+        # print(mainList)
+        mainList = list(dict.fromkeys(mainList))
+        mainList = list(filter(None, mainList)) 
+        # print("posttrim")
+        # print(mainList)
         mainList = mainList[0:9]
-        mainSet = set(mainList)
+        # print("cap")
+        # print(mainList)
+        mainSet = set(mainList) #don't need empty element
+        # print("set")
+        # print(mainSet)
         subSet=[]
-        if(Price=="" or title=="" or img =="" or URL == ""): #if error in problem skip over 
+        if(price=="" or title=="" or img =="" or URL == ""): #if error in problem skip over 
             continue
         for i in range(1,len(mainSet)): # go through entire list to make shit
                 subSet=set(itertools.combinations(mainSet,i))
-                for subElement in subSet:
+                for subElement in subSet: #for each combination of elements
                         if(subElement == ""):
                             continue
                         # print(subElement)
                         if(subElement in mainPriceDict):
-                                mainPriceDict[subElement].append(re.findall("[0-9]+\.[0-9]+",Price)[0])
+                                mainPriceDict[subElement].append(price)
                                 mainNameDict[subElement].append(title)
                                 mainURLDict[subElement].append(URL)
                                 mainImageDict[subElement].append(img)
+                                 #if element list is bigger than one than we can compare to other element
                                 relevantSet.add(subElement)
                         #can append other thing **
-                        else:
-                                mainPriceDict[subElement] = [re.findall("[0-9]+\.[0-9]+",Price)[0]]
+                        else: #create array with element
+                                mainPriceDict[subElement] = [price]
                                 mainNameDict[subElement] = [title]
                                 mainURLDict[subElement] = [URL]
                                 mainImageDict[subElement] = [img]                
     #pprint.pprint(relevantSet)
     #print("hella relevant")
-    #pprint.pprint(mainPriceDict)
+    # pprint.pprint(mainPriceDict)
     #pprint.pprint(mainNameDict)
-    #pprint.pprint(mainURLDict)
+    # pprint.pprint(mainURLDict)
     #pprint.pprint(mainImageDict)
     #print("prices")
     meanDict = {}
     # countDict = {}
     moreRelevantSet = set()
     for i in relevantSet:
+        # print(i)
+        # print(mainPriceDict[i])
         count = 0
         sums = 0
         for j in mainPriceDict[i]:
             try:
-                sums = sums + (float)(j)
+                sums = sums + (j)
                 count = count + 1
             except Exception as e:
                 print(sums)
@@ -84,7 +96,7 @@ def getDict(exampleList): #use dictionary to create clusters
             continue
         
     
-    #pprint.pprint(meanDict)
+    # pprint.pprint(meanDict)
     #print("MEAN!")
     sumSquared =0 
     numCount = 0
@@ -95,9 +107,9 @@ def getDict(exampleList): #use dictionary to create clusters
         sumSquared =0
         for j in mainPriceDict[i]:
             try:#for variance we get the sum(((value(x)-mean(x))^2)
-                mean = (float)(meanDict[i])
+                mean = (meanDict[i])
                 #the try statement allows the code to keep functioning even if an invalid value was parsed
-                difference = mean -  (float)(j) 
+                difference = mean -  (j) 
                 differenceSquared = difference * difference
                 sumSquared += differenceSquared
                 numCount = numCount + 1
@@ -106,40 +118,37 @@ def getDict(exampleList): #use dictionary to create clusters
         if(numCount>0):
             relevantVariance[i] = (float)(sumSquared/numCount) #explicitely converting to float to show that I want to mantain accuracy
     # pprint.pprint(moreRelevantSet)
-    #print.pprint(relevantVariance)
+    # pprint.pprint(relevantVariance)
     # print("Variance")
     # goodDeal = False
     outPut =[]
     # for i in moreRelevantSet:
+    categoryPrompt=['steal','awesome deal','pretty good deal']
     for i in relevantVariance:
-        for j in mainPriceDict[i]: #iterate through the same items whose mean were considered relevant and compare them 
-            mean = (float)(meanDict[i])
+        for j in range(len(mainPriceDict[i])): 
+        #iterate through the same items whose mean were considered relevant and compare them
+            num = mainPriceDict[i][j] 
+            mean = (meanDict[i])
             try:
-                num = (float)(j)
                 sd = math.sqrt(relevantVariance[i])
+                if(sd == 0): #make sure standard deviation was not 0 
+                    continue
+                zScore = (num-mean)/sd
             except Exception as e:
                 print(e)
                 continue
-            title = " ".join(list(dict.fromkeys(mainNameDict[i]))) 
+            title = mainNameDict[i][j]
             category = " ".join(i)
             text = " The item " + title
-            if num < mean -  (sd * 3):
-                text = text + " is a steal in the category of a " + category
-                text = text + " with the price of price $" + j
-                
-                print(text +"\n")
+            # print(zScore)
+            if zScore<-1.4:
+                text = text + " is a "+categoryPrompt[int(round(zScore))+3] +" in the category of a " + category
+                text = text + " with the price of price ${0:.2f}\n".format(num)
+                text = text + "Which can be found at " +  mainURLDict[i][j] +"\n"
+                outPut.append(text)
+                print(text)
                 #can only load up image
-            elif num < mean - (sd * 2):
-                text = text + " is a awesome deal in the category of a " + category
-                text = text + " with the price of price $" + j
-                print(text +"\n")
-                #can only load up image
-            elif num < mean - (sd):
-                text = text + " is a pretty good deal in the category of a " + category
-                text = text + " with the price of price $" + j
-                print(text +"\n")
-                #can only load up image
-    if not len(outPut) == 0 :
+    if len(outPut) == 0 :
         print("Sorry there were no thrifty deals on the searched page:(")
         
 # All the stuff inside your window.
@@ -162,8 +171,8 @@ window.close()
 
 
 # create an object of the Amazon Bot class
-emsee = AmazonBot(text_input)
-# emsee.source_code()  # run the source code
+emsee = AmazonBot(text_input) #text_input
+emsee.source_code()  # run the source code
 # this collects the list layout as a list of dictionaries
 outPutA = getDict(emsee.list_layout_amazon())
 # this collects the grid layout as a list of dictionaries
