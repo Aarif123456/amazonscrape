@@ -9,13 +9,16 @@ import re
 import itertools
 import math  
 
-def getDict(exampleList):
+def getDict(exampleList): #use dictionary to create clusters
     mainPriceDict = {}
     mainNameDict = {}
     mainURLDict = {}
     mainImageDict = {}
     relevantSet = set()
+
+    pprint.pprint(exampleList)
     for h in exampleList:
+        # pprint.pprint(h)
         # print(h)
         if(h==""):
             continue
@@ -57,7 +60,7 @@ def getDict(exampleList):
     #print("prices")
     meanDict = {}
     # countDict = {}
-    # moreRelevantSet = set()
+    moreRelevantSet = set()
     for i in relevantSet:
         count = 0
         sums = 0
@@ -74,19 +77,20 @@ def getDict(exampleList):
         try:
             if(count != 0):
                 meanDict[i] = float(sums / count)
+            if count > 3: #get elements whose means are a valid measurement
+                moreRelevantSet.add(i)
         except Exception as e:
             print(e)
             continue
-        # if count > 3: #get elements whose means are a valid measurement
-        #     moreRelevantSet.add(i)
+        
     
     #pprint.pprint(meanDict)
     #print("MEAN!")
     sumSquared =0 
     numCount = 0
     relevantVariance = {}
-    # for i in moreRelevantSet: #get the keys whose means are valid to find their variance
-    for i in relevantSet:
+    for i in moreRelevantSet: #get the keys whose means are valid to find their variance
+    # for i in relevantSet:
         numCount = 0
         sumSquared =0
         for j in mainPriceDict[i]:
@@ -104,9 +108,9 @@ def getDict(exampleList):
     # pprint.pprint(moreRelevantSet)
     #print.pprint(relevantVariance)
     # print("Variance")
-    # for i in moreRelevantSet:
     # goodDeal = False
     outPut =[]
+    # for i in moreRelevantSet:
     for i in relevantVariance:
         for j in mainPriceDict[i]: #iterate through the same items whose mean were considered relevant and compare them 
             mean = (float)(meanDict[i])
@@ -159,7 +163,7 @@ window.close()
 
 # create an object of the Amazon Bot class
 emsee = AmazonBot(text_input)
-emsee.source_code()  # run the source code
+# emsee.source_code()  # run the source code
 # this collects the list layout as a list of dictionaries
 outPutA = getDict(emsee.list_layout_amazon())
 # this collects the grid layout as a list of dictionaries
