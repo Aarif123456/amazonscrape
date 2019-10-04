@@ -21,11 +21,11 @@ def getDict(exampleList): #use dictionary to create clusters
         # print(h)
         if(h==""):
             continue
-        title = h['Title']
+        title = h['Title']       
         price = (float)(h['Price'].strip())
         URL = h['URL']
         img = h['Image']
-        mainList = title.strip().lower().replace("[", "").replace("(", "").replace(")", "").replace(",", "").replace("!", "").replace(":", " ").replace(" and ", " ").replace(" on ", " ").replace(" or ", " ").replace("-", " ").replace("]", " ").replace(" the " ," ").replace(" with " , " ").replace(" in " , "").replace(" for " , " ").replace(" an " , "").replace(" a " , "").replace("'", "").split(" ")
+        mainList = title.strip().lower().replace("[", "").replace("(", "").replace(")", "").replace(",", "").replace("!", "").replace(":", " ").replace("&", "").replace(" and ", " ").replace(" on ", " ").replace(" or ", " ").replace("-", " ").replace("]", " ").replace(" the " ," ").replace(" with " , " ").replace(" in " , "").replace(" for " , " ").replace(" an " , "").replace(" a " , "").replace("'", "").split(" ")
         title = h['Title'] #reget title so it is reloaded
         # print("pretrim")
         # print(mainList)
@@ -33,7 +33,7 @@ def getDict(exampleList): #use dictionary to create clusters
         mainList = list(filter(None, mainList)) 
         # print("posttrim")
         # print(mainList)
-        mainList = mainList[0:9]
+        mainList = mainList[0:11] #if you computer can run it you can increase accuracy of search by allowing in more words -> my laptop dies at 16 
         # print("cap")
         # print(mainList)
         mainSet = set(mainList) #don't need empty element
@@ -143,13 +143,13 @@ def getDict(exampleList): #use dictionary to create clusters
             # print(zScore)
             if zScore<-1.4:
                 text = text + " is a "+categoryPrompt[int(round(zScore))+3] +" in the category of a " + category
-                text = text + " with the price of price ${0:.2f}\n".format(num)
+                text = text + " with the price of ${0:.2f}\n".format(num)
                 text = text + "Which can be found at " +  mainURLDict[i][j] +"\n"
                 outPut.append(text)
                 print(text)
                 #can only load up image
-    if len(outPut) == 0 :
-        print("Sorry there were no thrifty deals on the searched page:(")
+    # if len(outPut) == 0 :
+    #     print("Sorry there were no thrifty deals on the searched page:(")
         
 # All the stuff inside your window.
 layout = [  [sg.Text('Please type a keyword for this program to check prices to on Amazon')],

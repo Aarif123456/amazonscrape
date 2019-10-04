@@ -24,7 +24,7 @@ class AmazonBot:
 
     def source_code(self):
         driver = self.driver
-        for page in range(1,5):
+        for page in range(1,6):
             url = 'https://www.amazon.com/s?k='+ urllib.parse.quote_plus(self.keyword) 
             if page>1:
                 url += '&page='+str(page) +'&ref=sr_pg_'+str(page)
@@ -40,23 +40,27 @@ class AmazonBot:
     def stripElements(i):
         try:
             price = (i.find('span', {"class": "a-offscreen"}).text)
-            price = re.findall('[0-9]+\.[0-9]{2}',price)[0]
+            # print("original price" , price)
+            # price = re.findall('(([0-9]*,(\s)*)*[0-9]+\.[0-9]{2})',price)
+            # price = price[0][0].replace(",", "")
+            price = price.replace(",", "").replace("$", "")
+            # print(price)
             # print("price----------------------------------------"+price)
-            
         except AttributeError:
             price = -1 #test this more but 
         try:
             title = (i.h2.text).strip()
             print("title----------------------------------------" +title)
             if(price==-1):
-                price = re.findall('(\$)([0-9]+\.[0-9]{2})', str(i))
+                price = re.findall('(\$)(\s)*(([0-9]*,)*[0-9]+\.[0-9]{2})', str(i))
                 if(len(price) > 0):
-                    price = price[0][1]
+                    price = price[0][2].replace(",", "")
                 else:
                     print("No price found")
                     return None        
             # print("price----------------------------------------")
             # print(price)
+            price = (float)(price)
             tag_url = re.findall(
                 '(href=")((.*?)dp/[a-zA-Z0-9]{10})(.*?)(")', str(i)) #[0].replace("href=\"", "")
             if(len(tag_url)>0):
@@ -86,7 +90,7 @@ class AmazonBot:
     def list_layout_amazon(self):
         allItem=[]
         driver = self.driver
-        for page in range(1,5):
+        for page in range(1,6):
             source = open(self.keyword+str(page)+'.html', "rb").read()
             soup = bs(source, "html.parser")
             cash = soup.find_all("div", {"class": "sg-col-20-of-24 s-result-item sg-col-0-of-12 sg-col-28-of-32 sg-col-16-of-20 sg-col sg-col-32-of-36 sg-col-12-of-16 sg-col-24-of-28"})
@@ -101,7 +105,7 @@ class AmazonBot:
     def grid_layout(self):
         allItem = []
         driver = self.driver
-        for page in range(1,5):
+        for page in range(1,6):
             source = open(self.keyword+str(page)+'.html', "rb").read()
             soup = bs(source, "html.parser")
             cash = soup.find_all("div", {"class": "sg-col-4-of-24 sg-col-4-of-12 sg-col-4-of-36 s-result-item sg-col-4-of-28 sg-col-4-of-16 sg-col sg-col-4-of-20 sg-col-4-of-32"})
